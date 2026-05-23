@@ -3,16 +3,19 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Star, ShoppingCart, Zap } from 'lucide-react';
 import Breadcrumb from '../components/common/Breadcrumb';
 import ProductCard from '../components/common/ProductCard';
-import { getProductById, getRelatedProducts } from '../data/products';
+import { useData } from '../context/DataContext';
 import { useCart } from '../context/CartContext';
+import { useToast } from '../context/ToastContext';
 import { formatPrice, calcDiscountPercent } from '../utils/formatPrice';
 import styles from './ProductDetail.module.css';
 
 export default function ProductDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { getProductById, activeProducts } = useData();
   const product = getProductById(id);
   const { addToCart } = useCart();
+  const { showToast } = useToast();
   const [color, setColor] = useState(product?.colors?.[0] || null);
   const [imageIndex, setImageIndex] = useState(0);
   const [expandedDesc, setExpandedDesc] = useState(false);
@@ -28,18 +31,22 @@ export default function ProductDetail() {
     );
   }
 
-  const related = getRelatedProducts(product);
-  const discount = calcDiscountPercent(product.price, product.originalPrice);
+  const related = activeProducts
+    .filter((p) => p.id !== product.id && (p.brand === product.brand || p.category === product.category))
+    .slice(0, 5);
+  const discount = calcDiscountPercent(product.price, product.originalPrice, product.oldPrice);
   const images = product.images || [product.image];
 
   const handleBuyNow = () => {
-    addToCart(product, 1, color);
+    const r = addToCart(product, 1, color);
+    if (!r.ok) { showToast(r.message, 'error'); return; }
     navigate('/checkout');
   };
 
   const handleAddCart = () => {
-    addToCart(product, 1, color);
-    navigate('/cart');
+    const r = addToCart(product, 1, color);
+    if (r.ok) showToast('Da them vao gio hang', 'success');
+    else showToast(r.message, 'error');
   };
 
   return (

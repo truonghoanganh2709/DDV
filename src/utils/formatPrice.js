@@ -3,7 +3,8 @@
   return `${Number(amount).toLocaleString('vi-VN')} d`;
 }
 
-export function calcDiscountPercent(price, originalPrice) {
-  if (!originalPrice || originalPrice <= price) return 0;
-  return Math.round(((originalPrice - price) / originalPrice) * 100);
+export function calcDiscountPercent(price, originalPrice, oldPrice) {
+  const orig = oldPrice ?? originalPrice;
+  if (!orig || orig <= price) return 0;
+  return Math.round(((orig - price) / orig) * 100);
 }

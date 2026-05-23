@@ -108,6 +108,13 @@
   margin-bottom: 16px;
 }
 
+.err {
+  display: block;
+  color: var(--primary);
+  font-size: 12px;
+  margin-top: 4px;
+}
+
 @media (max-width: 600px) {
   .row2 {
     grid-template-columns: 1fr;

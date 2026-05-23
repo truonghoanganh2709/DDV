@@ -4,15 +4,21 @@ import { ArrowLeft } from 'lucide-react';
 import Breadcrumb from '../components/common/Breadcrumb';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
+import { useData } from '../context/DataContext';
+import { useToast } from '../context/ToastContext';
 import { formatPrice } from '../utils/formatPrice';
+import { ORDER_STATUS } from '../constants/roles';
 import styles from './Checkout.module.css';
 
 export default function Checkout() {
-  const { items, total, subtotal, discountAmount, clearCart } = useCart();
-  const { user, addOrder, isAuthenticated } = useAuth();
+  const { items, total, subtotal, discountAmount, discountCode, clearCart } = useCart();
+  const { user } = useAuth();
+  const { addOrder } = useData();
+  const { showToast } = useToast();
   const navigate = useNavigate();
   const [gender, setGender] = useState('Anh');
   const [delivery, setDelivery] = useState('home');
+  const [errors, setErrors] = useState({});
 
   if (items.length === 0) {
     return (
@@ -25,29 +31,47 @@ export default function Checkout() {
   const handleSubmit = (e) => {
     e.preventDefault();
     const fd = new FormData(e.target);
+    const name = fd.get('name')?.toString().trim();
+    const phone = fd.get('phone')?.toString().trim();
+    const address = fd.get('address')?.toString().trim();
+    const nextErrors = {};
+    if (!name) nextErrors.name = 'Vui long nhap ho ten';
+    if (!phone || phone.length < 9) nextErrors.phone = 'So dien thoai khong hop le';
+    if (delivery === 'home' && !address) nextErrors.address = 'Vui long nhap dia chi';
+    if (Object.keys(nextErrors).length) {
+      setErrors(nextErrors);
+      return;
+    }
+    setErrors({});
+
     const order = {
       id: `ORD${Date.now()}`,
-      date: new Date().toISOString(),
-      items: [...items],
+      userId: user?.id || null,
+      customerName: name,
+      phone,
+      email: user?.email || fd.get('email') || '',
+      address: delivery === 'home' ? address : 'Nhan tai cua hang',
+      items: items.map((i) => ({
+        productId: i.productId,
+        name: i.name,
+        price: i.price,
+        quantity: i.quantity,
+        image: i.image,
+      })),
+      subtotal,
+      discount: discountAmount,
+      shippingFee: 0,
       total,
-      customer: {
-        name: fd.get('name'),
-        phone: fd.get('phone'),
-        address: fd.get('address'),
-        gender,
-        delivery,
-        payment: fd.get('payment'),
-        note: fd.get('note'),
-      },
-      status: 'Cho xac nhan',
+      paymentMethod: fd.get('payment'),
+      note: fd.get('note') || '',
+      status: ORDER_STATUS.PENDING,
+      promoCode: discountCode || null,
+      createdAt: new Date().toISOString(),
     };
-    if (isAuthenticated) addOrder(order);
-    else {
-      const guestOrders = JSON.parse(localStorage.getItem('ddv_guest_orders') || '[]');
-      guestOrders.unshift(order);
-      localStorage.setItem('ddv_guest_orders', JSON.stringify(guestOrders));
-    }
+
+    addOrder(order);
     clearCart();
+    showToast('Dat hang thanh cong', 'success');
     navigate('/order-success', { state: { orderId: order.id } });
   };
 
@@ -55,7 +79,7 @@ export default function Checkout() {
     <>
       <Breadcrumb items={[{ label: 'Gio hang', to: '/cart' }, { label: 'Thanh toan' }]} />
       <div className={`container ${styles.page}`}>
-        <form className={`card ${styles.form}`} onSubmit={handleSubmit}>
+        <form className={`card ${styles.form}`} onSubmit={handleSubmit} noValidate>
           <Link to="/cart" className={styles.back}>
             <ArrowLeft size={16} /> Tiep tuc mua hang
           </Link>
@@ -66,7 +90,9 @@ export default function Checkout() {
                 <img src={item.image} alt="" />
                 <div>
                   <p>{item.name}</p>
-                  <p className="text-primary">{formatPrice(item.price)} x {item.quantity}</p>
+                  <p className="text-primary">
+                    {formatPrice(item.price)} x {item.quantity}
+                  </p>
                 </div>
               </div>
             ))}
@@ -75,90 +101,83 @@ export default function Checkout() {
           <h3 className={styles.sectionTitle}>THONG TIN KHACH HANG</h3>
           <div className={styles.gender}>
             <label>
-              <input type="radio" name="g" checked={gender === 'Anh'} onChange={() => setGender('Anh')} />
+              <input type="radio" checked={gender === 'Anh'} onChange={() => setGender('Anh')} />
               Anh
             </label>
             <label>
-              <input type="radio" name="g" checked={gender === 'Chi'} onChange={() => setGender('Chi')} />
+              <input type="radio" checked={gender === 'Chi'} onChange={() => setGender('Chi')} />
               Chi
             </label>
           </div>
           <div className={styles.row2}>
             <div>
-              <label>Họ và tên *</label>
-              <input name="name" required defaultValue={user?.name || ''} placeholder="Nguyen Van A" />
+              <label>Ho va ten *</label>
+              <input name="name" defaultValue={user?.name || ''} />
+              {errors.name && <span className={styles.err}>{errors.name}</span>}
             </div>
             <div>
-              <label>Số điện thoại *</label>
-              <input name="phone" required defaultValue={user?.phone || ''} placeholder="0901234567" />
+              <label>So dien thoai *</label>
+              <input name="phone" defaultValue={user?.phone || ''} />
+              {errors.phone && <span className={styles.err}>{errors.phone}</span>}
             </div>
           </div>
 
           <h3 className={styles.sectionTitle}>HINH THUC GIAO HANG</h3>
           <div className={styles.gender}>
             <label>
-              <input
-                type="radio"
-                checked={delivery === 'home'}
-                onChange={() => setDelivery('home')}
-              />
+              <input type="radio" checked={delivery === 'home'} onChange={() => setDelivery('home')} />
               Giao hang tan noi
             </label>
             <label>
-              <input
-                type="radio"
-                checked={delivery === 'store'}
-                onChange={() => setDelivery('store')}
-              />
-              Nhan hang tai cua hang
+              <input type="radio" checked={delivery === 'store'} onChange={() => setDelivery('store')} />
+              Nhan tai cua hang
             </label>
           </div>
-          <div className={styles.row2}>
-            <div>
-              <label>Tinh/Thanh *</label>
-              <select name="city" required defaultValue="TP.HCM">
-                <option>TP.HCM</option>
-                <option>Ha Noi</option>
-                <option>Da Nang</option>
-              </select>
-            </div>
-            <div>
-              <label>Quan/Huyen *</label>
-              <select name="district" required defaultValue="Quan 1">
-                <option>Quan 1</option>
-                <option>Quan 3</option>
-                <option>Quan 5</option>
-              </select>
-            </div>
-          </div>
+          {delivery === 'home' && (
+            <>
+              <div className={styles.row2}>
+                <div>
+                  <label>Tinh/Thanh *</label>
+                  <select name="city" defaultValue="TP.HCM">
+                    <option>TP.HCM</option>
+                    <option>Ha Noi</option>
+                    <option>Da Nang</option>
+                  </select>
+                </div>
+                <div>
+                  <label>Quan/Huyen *</label>
+                  <select name="district" defaultValue="Quan 1">
+                    <option>Quan 1</option>
+                    <option>Quan 3</option>
+                  </select>
+                </div>
+              </div>
+              <div className={styles.field}>
+                <label>Ten duong, so nha *</label>
+                <input name="address" placeholder="123 Nguyen Hue" />
+                {errors.address && <span className={styles.err}>{errors.address}</span>}
+              </div>
+            </>
+          )}
           <div className={styles.field}>
-            <label>Ten duong, so nha *</label>
-            <input name="address" required placeholder="123 Nguyen Hue" />
-          </div>
-          <div className={styles.field}>
-            <label>Yeu cau khac (neu co)</label>
-            <input name="note" placeholder="Giao gio hanh chinh" />
+            <label>Ghi chu</label>
+            <input name="note" placeholder="Yeu cau khac" />
           </div>
 
           <h3 className={styles.sectionTitle}>PHUONG THUC THANH TOAN</h3>
           <div className={styles.field}>
             <select name="payment" required defaultValue="cod">
-              <option value="cod">Thanh toan khi nhan hang (COD)</option>
+              <option value="cod">COD - Thanh toan khi nhan hang</option>
               <option value="vnpay">VNPAY</option>
               <option value="momo">MoMo</option>
-              <option value="card">The tin dung/ghi no</option>
+              <option value="card">The tin dung</option>
             </select>
           </div>
 
-          <h3 className={styles.sectionTitle}>CHI TIET THANH TOAN</h3>
           <div className={styles.summary}>
             <div className={styles.sumRow}>
               <span>Tien hang</span>
               <span>{formatPrice(subtotal)}</span>
-            </div>
-            <div className={styles.sumRow}>
-              <span>Phi van chuyen</span>
-              <span>Mien phi</span>
             </div>
             {discountAmount > 0 && (
               <div className={styles.sumRow}>
@@ -172,11 +191,8 @@ export default function Checkout() {
             </div>
           </div>
 
-          <p className={styles.terms}>
-            Nhan nut Thanh toan, ban dong y voi dieu khoan mua hang cua Di Dong Viet.
-          </p>
           <button type="submit" className="btn btn-primary btn-block">
-            Thanh toan
+            Xac nhan dat hang
           </button>
         </form>
       </div>

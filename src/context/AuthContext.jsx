@@ -1,78 +1,76 @@
 ﻿import { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import { getItem, setItem, removeItem, STORAGE_KEYS } from '../utils/storage';
+import { ROLES } from '../constants/roles';
+import { useData } from './DataContext';
 
 const AuthContext = createContext(null);
-const STORAGE_KEY = 'ddv_auth';
-const ORDERS_KEY = 'ddv_orders';
 
-const DEMO_USERS = [
-  { id: 'u1', email: 'demo@didongviet.vn', password: '123456', name: 'Nguyen Van A', phone: '0901234567' },
-];
+function toSafeUser(user) {
+  if (!user) return null;
+  const { password, ...safe } = user;
+  return safe;
+}
 
 export function AuthProvider({ children }) {
+  const { findUserByCredentials, registerUser, updateUser, users } = useData();
   const [user, setUser] = useState(null);
-  const [orders, setOrders] = useState([]);
 
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) setUser(JSON.parse(raw));
-      const ordersRaw = localStorage.getItem(ORDERS_KEY);
-      if (ordersRaw) setOrders(JSON.parse(ordersRaw));
-    } catch {
-      /* ignore */
-    }
+    const saved = getItem(STORAGE_KEYS.AUTH);
+    if (saved) setUser(saved);
   }, []);
 
   useEffect(() => {
-    if (user) localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
-    else localStorage.removeItem(STORAGE_KEY);
+    if (user) setItem(STORAGE_KEYS.AUTH, user);
+    else removeItem(STORAGE_KEYS.AUTH);
   }, [user]);
 
   useEffect(() => {
-    localStorage.setItem(ORDERS_KEY, JSON.stringify(orders));
-  }, [orders]);
+    if (!user) return;
+    const fresh = users.find((u) => u.id === user.id);
+    if (fresh) setUser(toSafeUser(fresh));
+  }, [users, user?.id]);
 
   const login = (email, password) => {
-    const found = DEMO_USERS.find((u) => u.email === email && u.password === password);
-    if (!found) {
-      const stored = JSON.parse(localStorage.getItem('ddv_users') || '[]');
-      const match = stored.find((u) => u.email === email && u.password === password);
-      if (!match) return { ok: false, message: 'Email hoac mat khau khong dung' };
-      const { password: _, ...safe } = match;
-      setUser(safe);
-      return { ok: true };
-    }
-    const { password: _, ...safe } = found;
+    const found = findUserByCredentials(email.trim(), password);
+    if (!found) return { ok: false, message: 'Email hoac mat khau khong dung' };
+    if (found.locked) return { ok: false, message: 'Tai khoan da bi khoa' };
+    const safe = toSafeUser(found);
     setUser(safe);
-    return { ok: true };
+    return { ok: true, role: found.role };
   };
 
   const register = (data) => {
-    const stored = JSON.parse(localStorage.getItem('ddv_users') || '[]');
-    if (stored.some((u) => u.email === data.email) || DEMO_USERS.some((u) => u.email === data.email)) {
-      return { ok: false, message: 'Email da duoc su dung' };
-    }
-    const newUser = { id: `u${Date.now()}`, ...data };
-    stored.push(newUser);
-    localStorage.setItem('ddv_users', JSON.stringify(stored));
-    const { password: _, ...safe } = newUser;
-    setUser(safe);
-    return { ok: true };
+    const exists = users.some((u) => u.email === data.email);
+    if (exists) return { ok: false, message: 'Email da duoc su dung' };
+    const created = registerUser({ ...data, role: ROLES.USER });
+    if (!created) return { ok: false, message: 'Khong the dang ky' };
+    setUser(toSafeUser(created));
+    return { ok: true, role: ROLES.USER };
   };
 
   const logout = () => setUser(null);
 
   const updateProfile = (updates) => {
+    if (!user) return;
+    updateUser(user.id, updates);
     setUser((prev) => ({ ...prev, ...updates }));
   };
 
-  const addOrder = (order) => {
-    setOrders((prev) => [order, ...prev]);
-  };
+  const isAdmin = user?.role === ROLES.ADMIN;
+  const isAuthenticated = !!user;
 
   const value = useMemo(
-    () => ({ user, orders, login, register, logout, updateProfile, addOrder, isAuthenticated: !!user }),
-    [user, orders]
+    () => ({
+      user,
+      login,
+      register,
+      logout,
+      updateProfile,
+      isAuthenticated,
+      isAdmin,
+    }),
+    [user, isAuthenticated, isAdmin]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

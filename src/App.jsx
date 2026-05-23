@@ -1,6 +1,8 @@
-﻿import { Routes, Route } from 'react-router-dom';
+﻿import { Routes, Route, Navigate } from 'react-router-dom';
 import Layout from './components/layout/Layout';
 import ProtectedRoute from './components/common/ProtectedRoute';
+import AdminRoute from './components/common/AdminRoute';
+import AdminLayout from './components/admin/AdminLayout';
 import Home from './pages/Home';
 import ProductList from './pages/ProductList';
 import ProductDetail from './pages/ProductDetail';
@@ -16,6 +18,17 @@ import Wishlist from './pages/Wishlist';
 import StoreLocator from './pages/StoreLocator';
 import OrderTracking from './pages/OrderTracking';
 import Promotions from './pages/Promotions';
+import Dashboard from './admin/pages/Dashboard';
+import ProductListAdmin from './admin/pages/ProductListAdmin';
+import ProductFormAdmin from './admin/pages/ProductFormAdmin';
+import CategoryAdmin from './admin/pages/CategoryAdmin';
+import OrderListAdmin from './admin/pages/OrderListAdmin';
+import OrderDetailAdmin from './admin/pages/OrderDetailAdmin';
+import UserListAdmin from './admin/pages/UserListAdmin';
+import PromotionAdmin from './admin/pages/PromotionAdmin';
+import BannerAdmin from './admin/pages/BannerAdmin';
+import ReviewAdmin from './admin/pages/ReviewAdmin';
+import SettingsAdmin from './admin/pages/SettingsAdmin';
 
 export default function App() {
   return (
@@ -50,6 +63,29 @@ export default function App() {
             </ProtectedRoute>
           }
         />
+      </Route>
+
+      <Route
+        path="/admin"
+        element={
+          <AdminRoute>
+            <AdminLayout />
+          </AdminRoute>
+        }
+      >
+        <Route index element={<Navigate to="/admin/dashboard" replace />} />
+        <Route path="dashboard" element={<Dashboard />} />
+        <Route path="products" element={<ProductListAdmin />} />
+        <Route path="products/add" element={<ProductFormAdmin />} />
+        <Route path="products/edit/:id" element={<ProductFormAdmin />} />
+        <Route path="categories" element={<CategoryAdmin />} />
+        <Route path="orders" element={<OrderListAdmin />} />
+        <Route path="orders/:id" element={<OrderDetailAdmin />} />
+        <Route path="users" element={<UserListAdmin />} />
+        <Route path="promotions" element={<PromotionAdmin />} />
+        <Route path="banners" element={<BannerAdmin />} />
+        <Route path="reviews" element={<ReviewAdmin />} />
+        <Route path="settings" element={<SettingsAdmin />} />
       </Route>
     </Routes>
   );

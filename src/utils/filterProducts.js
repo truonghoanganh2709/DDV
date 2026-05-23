@@ -8,6 +8,8 @@
     sort,
     featured,
     onSale,
+    ram,
+    storage,
   } = filters;
 
   let result = [...products];
@@ -18,6 +20,14 @@
 
   if (brand && brand !== 'all') {
     result = result.filter((p) => p.brand === brand);
+  }
+
+  if (ram && ram !== 'all') {
+    result = result.filter((p) => (p.ram || '').toLowerCase().includes(ram.toLowerCase()));
+  }
+
+  if (storage && storage !== 'all') {
+    result = result.filter((p) => (p.storage || '').toLowerCase().includes(storage.toLowerCase()));
   }
 
   if (minPrice != null && minPrice !== '') {
@@ -43,7 +53,7 @@
   }
 
   if (onSale) {
-    result = result.filter((p) => p.originalPrice > p.price);
+    result = result.filter((p) => (p.oldPrice || p.originalPrice) > p.price);
   }
 
   if (sort === 'price-asc') {
@@ -52,6 +62,8 @@
     result.sort((a, b) => b.price - a.price);
   } else if (sort === 'rating') {
     result.sort((a, b) => b.rating - a.rating);
+  } else if (sort === 'sold') {
+    result.sort((a, b) => (b.sold || 0) - (a.sold || 0));
   } else if (sort === 'name') {
     result.sort((a, b) => a.name.localeCompare(b.name, 'vi'));
   }

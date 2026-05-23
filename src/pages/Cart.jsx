@@ -2,6 +2,7 @@
 import { ArrowLeft, Trash2, Minus, Plus } from 'lucide-react';
 import Breadcrumb from '../components/common/Breadcrumb';
 import { useCart } from '../context/CartContext';
+import { useToast } from '../context/ToastContext';
 import { formatPrice } from '../utils/formatPrice';
 import styles from './Cart.module.css';
 
@@ -9,12 +10,13 @@ export default function Cart() {
   const { items, updateQuantity, removeFromCart, subtotal, discountAmount, total, applyDiscount } =
     useCart();
   const navigate = useNavigate();
+  const { showToast } = useToast();
 
   const handleApplyCode = (e) => {
     e.preventDefault();
     const code = e.target.code.value;
     const result = applyDiscount(code);
-    alert(result.ok ? result.message : result.message);
+    showToast(result.message, result.ok ? 'success' : 'error');
   };
 
   if (items.length === 0) {

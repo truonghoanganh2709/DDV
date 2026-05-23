@@ -6,7 +6,7 @@ import styles from './ProductCard.module.css';
 
 export default function ProductCard({ product, showApple }) {
   const { toggleWishlist, isInWishlist } = useWishlist();
-  const discount = calcDiscountPercent(product.price, product.originalPrice);
+  const discount = calcDiscountPercent(product.price, product.originalPrice, product.oldPrice);
   const wished = isInWishlist(product.id);
 
   return (
@@ -34,8 +34,8 @@ export default function ProductCard({ product, showApple }) {
           {product.name}
         </Link>
         <p className={styles.price}>{formatPrice(product.price)}</p>
-        {product.originalPrice > product.price && (
-          <p className={styles.oldPrice}>{formatPrice(product.originalPrice)}</p>
+        {(product.oldPrice || product.originalPrice) > product.price && (
+          <p className={styles.oldPrice}>{formatPrice(product.oldPrice || product.originalPrice)}</p>
         )}
         {product.promos?.length > 0 && (
           <div className={styles.promos}>

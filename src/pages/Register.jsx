@@ -2,12 +2,14 @@
 import { Link, useNavigate } from 'react-router-dom';
 import Breadcrumb from '../components/common/Breadcrumb';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 import styles from './Auth.module.css';
 
 export default function Register() {
   const [form, setForm] = useState({ name: '', email: '', phone: '', password: '' });
   const [error, setError] = useState('');
   const { register } = useAuth();
+  const { showToast } = useToast();
   const navigate = useNavigate();
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
@@ -15,8 +17,10 @@ export default function Register() {
   const handleSubmit = (e) => {
     e.preventDefault();
     const result = register(form);
-    if (result.ok) navigate('/profile');
-    else setError(result.message);
+    if (result.ok) {
+      showToast('Dang ky thanh cong', 'success');
+      navigate('/');
+    } else setError(result.message);
   };
 
   return (

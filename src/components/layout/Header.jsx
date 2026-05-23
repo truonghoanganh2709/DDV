@@ -11,6 +11,8 @@ import {
   X,
   User,
   Heart,
+  Shield,
+  LogOut,
 } from 'lucide-react';
 import SearchBar from './SearchBar';
 import { useCart } from '../../context/CartContext';
@@ -28,7 +30,7 @@ const NAV_ITEMS = [
 export default function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { itemCount } = useCart();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isAdmin, user, logout } = useAuth();
   return (
     <header className={styles.header}>
       <div className={styles.topBar}>
@@ -83,13 +85,27 @@ export default function Header() {
                 <span className={styles.navLabel}>{label}</span>
               </NavLink>
             ))}
+            {isAdmin && (
+              <NavLink to="/admin/dashboard" className={styles.navItem}>
+                <Shield size={22} />
+                <span className={styles.navLabel}>Admin</span>
+              </NavLink>
+            )}
             <NavLink
               to={isAuthenticated ? ROUTES.PROFILE : ROUTES.LOGIN}
               className={styles.navItem}
             >
               <User size={22} />
-              <span className={styles.navLabel}>Tài khoản</span>
+              <span className={styles.navLabel}>
+                {isAuthenticated ? user?.name?.split(' ').pop() : 'Tai khoan'}
+              </span>
             </NavLink>
+            {isAuthenticated && (
+              <button type="button" className={styles.navItem} onClick={logout} title="Dang xuat">
+                <LogOut size={22} />
+                <span className={styles.navLabel}>Thoat</span>
+              </button>
+            )}
             <NavLink to={ROUTES.WISHLIST} className={styles.navItem}>
               <Heart size={22} />
               <span className={styles.navLabel}>Yêu thích</span>

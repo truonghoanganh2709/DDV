@@ -1,0 +1,173 @@
+.layout {
+  display: flex;
+  min-height: 100vh;
+  background: #f0f2f5;
+}
+
+.sidebar {
+  width: 260px;
+  background: #1a1a2e;
+  color: #e5e7eb;
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  z-index: 100;
+  transition: transform 0.25s;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.logo {
+  width: 40px;
+  height: 40px;
+  background: var(--primary);
+  color: white;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 20px;
+}
+
+.brand small {
+  display: block;
+  opacity: 0.6;
+  font-size: 11px;
+}
+
+.sidebar nav {
+  flex: 1;
+  padding: 12px;
+  overflow-y: auto;
+}
+
+.sidebar nav a {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 14px;
+  border-radius: 8px;
+  color: #d1d5db;
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+.sidebar nav a:hover,
+.active {
+  background: rgba(215, 25, 32, 0.2) !important;
+  color: white !important;
+}
+
+.sidebarFooter {
+  padding: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.linkBtn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px;
+  background: none;
+  border: none;
+  color: #9ca3af;
+  cursor: pointer;
+  font-size: 13px;
+  border-radius: 6px;
+}
+
+.linkBtn:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: white;
+}
+
+.main {
+  flex: 1;
+  margin-left: 260px;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.header {
+  background: white;
+  padding: 14px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+.menuBtn {
+  display: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.headerRight {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+}
+
+.role {
+  background: var(--primary);
+  color: white;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.content {
+  padding: 24px;
+  flex: 1;
+}
+
+.backdrop {
+  display: none;
+}
+
+@media (max-width: 992px) {
+  .sidebar {
+    transform: translateX(-100%);
+  }
+
+  .open {
+    transform: translateX(0);
+  }
+
+  .main {
+    margin-left: 0;
+  }
+
+  .menuBtn {
+    display: flex;
+  }
+
+  .backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 90;
+    border: none;
+    cursor: pointer;
+  }
+}
