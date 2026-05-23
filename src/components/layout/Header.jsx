@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { Link, NavLink } from 'react-router-dom';
 import {
   LayoutGrid,
@@ -12,7 +12,6 @@ import {
   User,
   Heart,
   Shield,
-  LogOut,
 } from 'lucide-react';
 import SearchBar from './SearchBar';
 import { useCart } from '../../context/CartContext';
@@ -21,16 +20,16 @@ import { ROUTES } from '../../constants/routes';
 import styles from './Header.module.css';
 
 const NAV_ITEMS = [
-  { to: ROUTES.STORES, icon: MapPin, label: 'C\u1eeda h\u00e0ng g\u1ea7n b\u1ea1n', short: 'C\u1eeda h\u00e0ng' },
-  { to: ROUTES.TRACK_ORDER, icon: ClipboardList, label: 'Tra c\u1ee9u \u0111\u01a1n h\u00e0ng', short: 'Tra c\u1ee9u' },
-  { to: ROUTES.PROMOTIONS, icon: Ticket, label: 'Khuy\u1ebfn m\u00e3i', short: 'KM' },
-  { to: ROUTES.CART, icon: ShoppingCart, label: 'Gi\u1ecf h\u00e0ng', short: 'Gi\u1ecf', badge: true },
+  { to: ROUTES.STORES, icon: MapPin, label: 'Cửa hàng gần bạn', short: 'Cửa hàng' },
+  { to: ROUTES.TRACK_ORDER, icon: ClipboardList, label: 'Tra cứu đơn hàng', short: 'Tra cứu' },
+  { to: ROUTES.PROMOTIONS, icon: Ticket, label: 'Khuyến mãi', short: 'KM' },
+  { to: ROUTES.CART, icon: ShoppingCart, label: 'Giỏ hàng', short: 'Giỏ', badge: true },
 ];
 
 export default function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { itemCount } = useCart();
-  const { isAuthenticated, isAdmin, user, logout } = useAuth();
+  const { isAuthenticated, isAdmin, user } = useAuth();
   return (
     <header className={styles.header}>
       <div className={styles.topBar}>
@@ -100,12 +99,6 @@ export default function Header() {
                 {isAuthenticated ? user?.name?.split(' ').pop() : 'Tai khoan'}
               </span>
             </NavLink>
-            {isAuthenticated && (
-              <button type="button" className={styles.navItem} onClick={logout} title="Dang xuat">
-                <LogOut size={22} />
-                <span className={styles.navLabel}>Thoat</span>
-              </button>
-            )}
             <NavLink to={ROUTES.WISHLIST} className={styles.navItem}>
               <Heart size={22} />
               <span className={styles.navLabel}>Yêu thích</span>

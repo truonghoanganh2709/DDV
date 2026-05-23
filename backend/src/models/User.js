@@ -9,8 +9,11 @@ const userSchema = new mongoose.Schema(
     address: { type: String, trim: true, default: '' },
 
     role: { type: String, enum: ['user', 'admin'], default: 'user' },
+    status: { type: String, enum: ['active', 'blocked'], default: 'active' },
+
+    // legacy fields (giữ lại để không vỡ data cũ)
     isActive: { type: Boolean, default: true },
-    locked: { type: Boolean, default: false }
+    locked: { type: Boolean, default: false },
   },
   { timestamps: true }
 );
@@ -22,4 +25,3 @@ userSchema.methods.toSafeJSON = function toSafeJSON() {
 };
 
 export default mongoose.model('User', userSchema);
-

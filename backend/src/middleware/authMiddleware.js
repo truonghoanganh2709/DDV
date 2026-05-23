@@ -17,7 +17,8 @@ export async function protect(req, res, next) {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const user = await User.findById(decoded.id);
     if (!user) return res.status(401).json({ message: 'Not authorized' });
-    if (user.locked || !user.isActive) return res.status(403).json({ message: 'Account locked' });
+    const status = user.status || (user.locked || !user.isActive ? 'blocked' : 'active');
+    if (status === 'blocked') return res.status(403).json({ message: 'Account locked' });
 
     req.user = user;
     next();
@@ -32,7 +33,8 @@ export async function optionalAuth(req, res, next) {
     if (!token) return next();
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const user = await User.findById(decoded.id);
-    if (user && !user.locked && user.isActive) req.user = user;
+    const status = user?.status || (user?.locked || !user?.isActive ? 'blocked' : 'active');
+    if (user && status !== 'blocked') req.user = user;
     next();
   } catch {
     next();
@@ -44,4 +46,3 @@ export function adminOnly(req, res, next) {
   if (req.user.role !== 'admin') return res.status(403).json({ message: 'Admin only' });
   next();
 }
-

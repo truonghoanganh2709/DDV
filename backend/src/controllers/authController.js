@@ -1,9 +1,27 @@
-import bcrypt from 'bcryptjs';
+﻿import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 
 function signToken(userId) {
   return jwt.sign({ id: userId }, process.env.JWT_SECRET, { expiresIn: '7d' });
+}
+
+function normalizeRole(role) {
+  return role === 'admin' ? 'admin' : 'user';
+}
+
+function normalizeStatus(user) {
+  return user.status || (user.locked || !user.isActive ? 'blocked' : 'active');
+}
+
+function toLoginUser(user, status = user.status) {
+  return {
+    _id: user._id,
+    name: user.name,
+    email: user.email,
+    role: normalizeRole(user.role),
+    status,
+  };
 }
 
 export async function register(req, res) {
@@ -20,11 +38,12 @@ export async function register(req, res) {
     password: hashed,
     phone,
     address,
-    role: 'user'
+    role: 'user',
+    status: 'active'
   });
 
   const token = signToken(user._id);
-  return res.status(201).json({ token, user: user.toSafeJSON() });
+  return res.status(201).json({ success: true, token, user: toLoginUser(user, user.status) });
 }
 
 export async function login(req, res) {
@@ -33,17 +52,23 @@ export async function login(req, res) {
 
   const user = await User.findOne({ email: String(email).toLowerCase().trim() });
   if (!user) return res.status(401).json({ message: 'Email hoac mat khau khong dung' });
-  if (user.locked || !user.isActive) return res.status(403).json({ message: 'Tai khoan da bi khoa' });
+
+  const status = normalizeStatus(user);
+  if (status === 'blocked') return res.status(403).json({ message: 'Tai khoan da bi khoa' });
 
   const ok = await bcrypt.compare(String(password), user.password);
   if (!ok) return res.status(401).json({ message: 'Email hoac mat khau khong dung' });
 
   const token = signToken(user._id);
-  return res.json({ token, user: user.toSafeJSON() });
+  return res.json({
+    success: true,
+    token,
+    user: toLoginUser(user, status),
+  });
 }
 
 export async function getProfile(req, res) {
-  return res.json({ user: req.user.toSafeJSON() });
+  return res.json({ user: toLoginUser(req.user, normalizeStatus(req.user)) });
 }
 
 export async function updateProfile(req, res) {
@@ -58,6 +83,5 @@ export async function updateProfile(req, res) {
   }
 
   await req.user.save();
-  return res.json({ user: req.user.toSafeJSON() });
+  return res.json({ user: toLoginUser(req.user, normalizeStatus(req.user)) });
 }
-

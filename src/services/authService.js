@@ -8,6 +8,10 @@ export const authService = {
 
   async login(payload) {
     const { data } = await api.post('/auth/login', payload);
+    if (data?.token && data?.user) {
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify(data.user));
+    }
     return data; // {token, user}
   },
 
@@ -21,4 +25,3 @@ export const authService = {
     return data; // {user}
   },
 };
-

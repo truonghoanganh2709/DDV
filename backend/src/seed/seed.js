@@ -41,6 +41,7 @@ async function run() {
       email: 'admin@gmail.com',
       password: hashed,
       role: 'admin',
+      status: 'active',
       phone: '0900000000',
       address: 'TP.HCM'
     },
@@ -49,6 +50,7 @@ async function run() {
       email: 'user@gmail.com',
       password: hashed,
       role: 'user',
+      status: 'active',
       phone: '0911111111',
       address: 'TP.HCM'
     }
@@ -61,6 +63,7 @@ async function run() {
       email: `user${i + 1}@gmail.com`,
       password: hashed,
       role: 'user',
+      status: 'active',
       phone: `09${String(20000000 + i).padStart(8, '0')}`,
       address: 'TP.HCM'
     }))
@@ -341,4 +344,3 @@ run().catch((err) => {
   console.error(err);
   process.exit(1);
 });
-

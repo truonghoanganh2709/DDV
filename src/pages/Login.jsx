@@ -18,19 +18,29 @@ export default function Login() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError('');
     const result = await login(email, password);
+    console.log('login response', result.response || result);
     if (!result.ok) {
       setError(result.message);
       return;
     }
+
+    const user = result.user;
+    console.log('user role', user.role);
     showToast('Dang nhap thanh cong', 'success');
-    if (result.role === ROLES.ADMIN) {
+
+    if (user.role === ROLES.ADMIN) {
       navigate('/admin/dashboard', { replace: true });
-    } else if (from && !from.startsWith('/admin')) {
-      navigate(from, { replace: true });
-    } else {
-      navigate('/', { replace: true });
+      return;
     }
+
+    if (user.role === ROLES.USER) {
+      navigate(from && !from.startsWith('/admin') ? from : '/', { replace: true });
+      return;
+    }
+
+    navigate('/', { replace: true });
   };
 
   return (
