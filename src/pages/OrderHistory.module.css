@@ -1,0 +1,45 @@
+﻿.page {
+  padding-bottom: 48px;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.order {
+  padding: 20px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.status {
+  background: #fff5f5;
+  color: var(--primary);
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.order ul {
+  list-style: none;
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.order li {
+  padding: 4px 0;
+}
+
+.total {
+  margin-top: 12px;
+  font-weight: 700;
+  color: var(--primary);
+  text-align: right;
+}

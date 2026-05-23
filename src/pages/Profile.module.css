@@ -1,0 +1,93 @@
+﻿.page {
+  padding-bottom: 48px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+.menu {
+  padding: 24px;
+}
+
+.avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: #fff5f5;
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 12px;
+}
+
+.name {
+  text-align: center;
+  font-weight: 700;
+}
+
+.menu nav {
+  margin-top: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.menu nav a,
+.logout {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  border-radius: var(--radius);
+  font-size: 14px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+  color: var(--text);
+}
+
+.menu nav a:hover,
+.active {
+  background: #fff5f5;
+  color: var(--primary);
+}
+
+.logout:hover {
+  color: var(--primary);
+}
+
+.content {
+  padding: 24px;
+}
+
+.content h2 {
+  margin-bottom: 20px;
+  color: var(--primary);
+}
+
+.content label {
+  display: block;
+  font-size: 13px;
+  margin: 12px 0 6px;
+}
+
+.content input {
+  width: 100%;
+  max-width: 400px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+@media (max-width: 768px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}

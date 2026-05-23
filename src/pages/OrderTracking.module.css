@@ -1,0 +1,101 @@
+﻿.page {
+  max-width: 900px;
+  margin: 0 auto;
+  padding-bottom: 48px;
+}
+
+.card {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  overflow: hidden;
+}
+
+.illus {
+  background: linear-gradient(135deg, #fff5f5, #ffe0e0);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px;
+  min-height: 360px;
+}
+
+.scooter {
+  width: 200px;
+  height: 160px;
+  background: var(--primary);
+  border-radius: 50% 50% 40% 40%;
+  opacity: 0.2;
+  margin-bottom: 16px;
+}
+
+.illus p {
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.form {
+  padding: 48px 32px;
+}
+
+.form h1 {
+  margin-bottom: 24px;
+  color: var(--primary);
+}
+
+.form label {
+  display: block;
+  font-size: 13px;
+  margin: 12px 0 6px;
+}
+
+.form input {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.result {
+  margin-top: 24px;
+  padding: 24px;
+}
+
+.timeline {
+  list-style: none;
+  margin-top: 20px;
+}
+
+.timeline li {
+  display: flex;
+  gap: 16px;
+  padding: 12px 0;
+  opacity: 0.5;
+}
+
+.done {
+  opacity: 1;
+}
+
+.dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--border);
+  margin-top: 4px;
+  flex-shrink: 0;
+}
+
+.done .dot {
+  background: var(--primary);
+}
+
+@media (max-width: 768px) {
+  .card {
+    grid-template-columns: 1fr;
+  }
+
+  .illus {
+    min-height: 200px;
+  }
+}

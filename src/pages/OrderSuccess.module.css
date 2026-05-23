@@ -1,0 +1,27 @@
+﻿.page {
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 48px 16px;
+}
+
+.card {
+  padding: 48px 32px;
+  text-align: center;
+}
+
+.card h1 {
+  margin: 16px 0 8px;
+  color: var(--success);
+}
+
+.card p {
+  margin: 8px 0;
+}
+
+.actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-top: 32px;
+  flex-wrap: wrap;
+}

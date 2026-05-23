@@ -1,0 +1,118 @@
+﻿.page {
+  padding-bottom: 48px;
+}
+
+.card {
+  display: grid;
+  grid-template-columns: 400px 1fr;
+  min-height: 520px;
+  overflow: hidden;
+}
+
+.left {
+  padding: 24px;
+  border-right: 1px solid var(--border);
+  overflow-y: auto;
+  max-height: 600px;
+}
+
+.left h1 {
+  font-size: 1.25rem;
+  margin-bottom: 16px;
+  color: var(--primary);
+}
+
+.filters select {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 12px;
+}
+
+.count {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+}
+
+.list {
+  list-style: none;
+}
+
+.list li {
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 10px;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+
+.list li:hover,
+.active {
+  border-color: var(--primary) !important;
+  background: #fffafa;
+}
+
+.list h3 {
+  font-size: 14px;
+  color: var(--primary);
+  margin-bottom: 6px;
+}
+
+.list p {
+  font-size: 12px;
+  color: var(--text-muted);
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 4px 0;
+}
+
+.status {
+  display: inline-block;
+  margin-top: 6px;
+  font-size: 11px;
+  color: var(--success);
+  font-weight: 500;
+}
+
+.map {
+  position: relative;
+  min-height: 400px;
+}
+
+.map iframe {
+  width: 100%;
+  height: 100%;
+  min-height: 520px;
+  border: none;
+}
+
+.mapLabel {
+  position: absolute;
+  bottom: 16px;
+  left: 16px;
+  background: white;
+  padding: 8px 12px;
+  border-radius: var(--radius);
+  font-size: 13px;
+  box-shadow: var(--shadow);
+}
+
+@media (max-width: 900px) {
+  .card {
+    grid-template-columns: 1fr;
+  }
+
+  .left {
+    max-height: none;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .map iframe {
+    min-height: 300px;
+  }
+}

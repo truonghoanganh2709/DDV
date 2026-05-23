@@ -1,0 +1,47 @@
+.filterRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.filterPill {
+  padding: 6px 14px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 13px;
+  background: white;
+  cursor: pointer;
+}
+
+.filterPill:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.promoStrip {
+  padding: 24px 0;
+}
+
+.promoInner {
+  padding: 24px;
+  background: linear-gradient(90deg, #e3f2fd, #fff);
+  border-radius: var(--radius);
+}
+
+.promoInner h3 {
+  color: var(--primary);
+  font-size: 1.5rem;
+  margin-bottom: 8px;
+}
+
+.promoInner p {
+  margin-bottom: 16px;
+}
+
+@media (max-width: 768px) {
+  .filterRow {
+    margin-left: 0;
+    width: 100%;
+  }
+}

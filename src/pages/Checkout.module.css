@@ -1,0 +1,115 @@
+﻿.page {
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.form {
+  padding: 24px;
+}
+
+.back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--primary);
+  margin-bottom: 20px;
+}
+
+.items {
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 16px;
+  margin-bottom: 24px;
+}
+
+.item {
+  display: flex;
+  gap: 12px;
+  padding: 8px 0;
+}
+
+.item img {
+  width: 60px;
+  height: 60px;
+  object-fit: contain;
+}
+
+.sectionTitle {
+  font-size: 14px;
+  font-weight: 700;
+  margin: 20px 0 12px;
+  color: var(--text);
+}
+
+.gender {
+  display: flex;
+  gap: 24px;
+  margin-bottom: 16px;
+}
+
+.gender label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.row2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.field {
+  margin-bottom: 16px;
+}
+
+.field label,
+.row2 label {
+  display: block;
+  font-size: 13px;
+  margin-bottom: 6px;
+  font-weight: 500;
+}
+
+.field input,
+.field select,
+.row2 input,
+.row2 select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.summary {
+  background: #f8f9fa;
+  padding: 16px;
+  border-radius: var(--radius);
+  margin-bottom: 16px;
+}
+
+.sumRow {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 0;
+  font-size: 14px;
+}
+
+.totalRow strong {
+  font-size: 22px;
+  color: var(--primary);
+}
+
+.terms {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 16px;
+}
+
+@media (max-width: 600px) {
+  .row2 {
+    grid-template-columns: 1fr;
+  }
+}
