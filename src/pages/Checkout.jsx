@@ -28,8 +28,13 @@ export default function Checkout() {
     );
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!user) {
+      showToast('Vui long dang nhap de dat hang', 'error');
+      navigate('/login', { state: { redirectTo: '/checkout' } });
+      return;
+    }
     const fd = new FormData(e.target);
     const name = fd.get('name')?.toString().trim();
     const phone = fd.get('phone')?.toString().trim();
@@ -44,13 +49,17 @@ export default function Checkout() {
     }
     setErrors({});
 
-    const order = {
-      id: `ORD${Date.now()}`,
-      userId: user?.id || null,
-      customerName: name,
-      phone,
-      email: user?.email || fd.get('email') || '',
-      address: delivery === 'home' ? address : 'Nhan tai cua hang',
+    const payload = {
+      customerInfo: {
+        gender,
+        name,
+        phone,
+        email: user?.email || fd.get('email') || '',
+        address: delivery === 'home' ? address : 'Nhan tai cua hang',
+        city: fd.get('city') || 'TP.HCM',
+        district: fd.get('district') || '',
+        delivery,
+      },
       items: items.map((i) => ({
         productId: i.productId,
         name: i.name,
@@ -59,17 +68,16 @@ export default function Checkout() {
         image: i.image,
       })),
       subtotal,
-      discount: discountAmount,
+      discountAmount,
       shippingFee: 0,
-      total,
+      totalPrice: total,
       paymentMethod: fd.get('payment'),
       note: fd.get('note') || '',
       status: ORDER_STATUS.PENDING,
       promoCode: discountCode || null,
-      createdAt: new Date().toISOString(),
     };
 
-    addOrder(order);
+    const order = await addOrder(payload);
     clearCart();
     showToast('Dat hang thanh cong', 'success');
     navigate('/order-success', { state: { orderId: order.id } });

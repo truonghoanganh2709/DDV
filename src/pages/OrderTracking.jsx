@@ -1,30 +1,46 @@
 ﻿import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import Breadcrumb from '../components/common/Breadcrumb';
-import { useData } from '../context/DataContext';
+import { useAuth } from '../context/AuthContext';
+import { orderService } from '../services/orderService';
 import { ORDER_STATUS_LABELS } from '../constants/roles';
 import styles from './OrderTracking.module.css';
 
 export default function OrderTracking() {
   const [params] = useSearchParams();
-  const { orders } = useData();
+  const { user } = useAuth();
   const [phone, setPhone] = useState(params.get('phone') || '');
   const [orderId, setOrderId] = useState(params.get('orderId') || '');
   const [result, setResult] = useState(null);
   const [error, setError] = useState('');
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const found = orders.find(
-      (o) => o.id.toUpperCase() === orderId.trim().toUpperCase() && o.phone === phone.trim()
-    );
-    if (!found) {
-      setError('Khong tim thay don hang. Kiem tra lai ma don va so dien thoai.');
+    if (!user) {
+      setError('Vui long dang nhap de tra cuu don hang.');
       setResult(null);
       return;
     }
-    setError('');
-    setResult(found);
+    try {
+      const found = await orderService.getById(orderId.trim());
+      const foundPhone = found?.customerInfo?.phone || found?.phone;
+      if (!found || foundPhone !== phone.trim()) {
+        setError('Khong tim thay don hang. Kiem tra lai ma don va so dien thoai.');
+        setResult(null);
+        return;
+      }
+      setError('');
+      setResult({
+        ...found,
+        id: found.id || found.orderCode || orderId.trim(),
+        customerName: found.customerName || found.customerInfo?.name,
+        address: found.address || found.customerInfo?.address,
+        phone: foundPhone,
+      });
+    } catch {
+      setError('Khong tim thay don hang. Kiem tra lai ma don va so dien thoai.');
+      setResult(null);
+    }
   };
 
   const steps = (status) => {

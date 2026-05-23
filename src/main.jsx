@@ -12,17 +12,17 @@ import './styles/global.css';
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <BrowserRouter>
-      <DataProvider>
-        <ToastProvider>
-          <AuthProvider>
+      <ToastProvider>
+        <AuthProvider>
+          <DataProvider>
             <CartProvider>
               <WishlistProvider>
                 <App />
               </WishlistProvider>
             </CartProvider>
-          </AuthProvider>
-        </ToastProvider>
-      </DataProvider>
+          </DataProvider>
+        </AuthProvider>
+      </ToastProvider>
     </BrowserRouter>
   </React.StrictMode>
 );

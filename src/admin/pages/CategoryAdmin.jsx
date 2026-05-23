@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useData } from '../../context/DataContext';
 import { useToast } from '../../context/ToastContext';
 import ConfirmDialog from '../../components/common/ConfirmDialog';
@@ -11,29 +11,33 @@ export default function CategoryAdmin() {
   const [form, setForm] = useState({ id: '', name: '', slug: '', active: true });
   const [deleteId, setDeleteId] = useState(null);
 
+  useEffect(() => {
+    setList(categories);
+  }, [categories]);
+
   const sync = (next) => {
     setList(next);
-    saveCategories(next);
+    return saveCategories(next);
   };
 
-  const add = () => {
+  const add = async () => {
     if (!form.name) return;
     const id = form.id || form.slug || `cat-${Date.now()}`;
     if (list.some((c) => c.id === id)) {
       showToast('ID da ton tai', 'error');
       return;
     }
-    sync([...list, { ...form, id, slug: form.slug || id }]);
+    await sync([...list, { ...form, id, slug: form.slug || id }]);
     setForm({ id: '', name: '', slug: '', active: true });
     showToast('Da them danh muc', 'success');
   };
 
-  const toggle = (id) => {
-    sync(list.map((c) => (c.id === id ? { ...c, active: !c.active } : c)));
+  const toggle = async (id) => {
+    await sync(list.map((c) => (c.id === id ? { ...c, active: !c.active } : c)));
   };
 
-  const remove = () => {
-    sync(list.filter((c) => c.id !== deleteId));
+  const remove = async () => {
+    await sync(list.filter((c) => c.id !== deleteId));
     setDeleteId(null);
     showToast('Da xoa danh muc', 'success');
   };

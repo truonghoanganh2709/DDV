@@ -1,60 +1,92 @@
-﻿import { createContext, useContext, useEffect, useMemo, useState } from 'react';
-import { getItem, setItem, removeItem, STORAGE_KEYS } from '../utils/storage';
+import { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import { getItem, removeItem, setItem, STORAGE_KEYS } from '../utils/storage';
 import { ROLES } from '../constants/roles';
-import { useData } from './DataContext';
+import { authService } from '../services/authService';
+import { setUnauthorizedHandler } from '../services/api';
 
 const AuthContext = createContext(null);
 
-function toSafeUser(user) {
-  if (!user) return null;
-  const { password, ...safe } = user;
-  return safe;
+function normUser(u) {
+  if (!u) return null;
+  return { ...u, id: u.id || u._id };
 }
 
 export function AuthProvider({ children }) {
-  const { findUserByCredentials, registerUser, updateUser, users } = useData();
   const [user, setUser] = useState(null);
+  const [token, setToken] = useState(null);
 
   useEffect(() => {
-    const saved = getItem(STORAGE_KEYS.AUTH);
-    if (saved) setUser(saved);
+    const savedToken = getItem(STORAGE_KEYS.TOKEN);
+    const savedUser = getItem(STORAGE_KEYS.USER);
+    if (savedToken) setToken(savedToken);
+    if (savedUser) setUser(normUser(savedUser));
   }, []);
 
   useEffect(() => {
-    if (user) setItem(STORAGE_KEYS.AUTH, user);
-    else removeItem(STORAGE_KEYS.AUTH);
+    if (token) setItem(STORAGE_KEYS.TOKEN, token);
+    else removeItem(STORAGE_KEYS.TOKEN);
+  }, [token]);
+
+  useEffect(() => {
+    if (user) setItem(STORAGE_KEYS.USER, user);
+    else removeItem(STORAGE_KEYS.USER);
   }, [user]);
 
   useEffect(() => {
-    if (!user) return;
-    const fresh = users.find((u) => u.id === user.id);
-    if (fresh) setUser(toSafeUser(fresh));
-  }, [users, user?.id]);
+    setUnauthorizedHandler(() => {
+      setToken(null);
+      setUser(null);
+    });
+  }, []);
 
-  const login = (email, password) => {
-    const found = findUserByCredentials(email.trim(), password);
-    if (!found) return { ok: false, message: 'Email hoac mat khau khong dung' };
-    if (found.locked) return { ok: false, message: 'Tai khoan da bi khoa' };
-    const safe = toSafeUser(found);
-    setUser(safe);
-    return { ok: true, role: found.role };
+  // refresh profile (nếu có token)
+  useEffect(() => {
+    if (!token) return;
+    authService
+      .getProfile()
+      .then((res) => {
+        if (res?.user) setUser(normUser(res.user));
+      })
+      .catch(() => {
+        // ignore - interceptor 401 sẽ logout
+      });
+  }, [token]);
+
+  const login = async (email, password) => {
+    try {
+      const res = await authService.login({ email, password });
+      setToken(res.token);
+      setUser(normUser(res.user));
+      return { ok: true, role: res.user?.role };
+    } catch (err) {
+      return { ok: false, message: err?.response?.data?.message || 'Dang nhap that bai' };
+    }
   };
 
-  const register = (data) => {
-    const exists = users.some((u) => u.email === data.email);
-    if (exists) return { ok: false, message: 'Email da duoc su dung' };
-    const created = registerUser({ ...data, role: ROLES.USER });
-    if (!created) return { ok: false, message: 'Khong the dang ky' };
-    setUser(toSafeUser(created));
-    return { ok: true, role: ROLES.USER };
+  const register = async (data) => {
+    try {
+      const res = await authService.register({ ...data, role: ROLES.USER });
+      setToken(res.token);
+      setUser(normUser(res.user));
+      return { ok: true, role: ROLES.USER };
+    } catch (err) {
+      return { ok: false, message: err?.response?.data?.message || 'Dang ky that bai' };
+    }
   };
 
-  const logout = () => setUser(null);
+  const logout = () => {
+    setToken(null);
+    setUser(null);
+  };
 
-  const updateProfile = (updates) => {
-    if (!user) return;
-    updateUser(user.id, updates);
-    setUser((prev) => ({ ...prev, ...updates }));
+  const updateProfile = async (updates) => {
+    try {
+      const res = await authService.updateProfile(updates);
+      if (res?.user) setUser(normUser(res.user));
+      return { ok: true };
+    } catch (err) {
+      return { ok: false, message: err?.response?.data?.message || 'Cap nhat that bai' };
+    }
   };
 
   const isAdmin = user?.role === ROLES.ADMIN;
@@ -63,6 +95,7 @@ export function AuthProvider({ children }) {
   const value = useMemo(
     () => ({
       user,
+      token,
       login,
       register,
       logout,
@@ -70,7 +103,7 @@ export function AuthProvider({ children }) {
       isAuthenticated,
       isAdmin,
     }),
-    [user, isAuthenticated, isAdmin]
+    [user, token, isAuthenticated, isAdmin]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

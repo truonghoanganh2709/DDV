@@ -1,13 +1,13 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { getItem, setItem, STORAGE_KEYS } from '../utils/storage';
-import { SEED_PRODUCTS, normalizeProduct } from '../data/mockProducts';
-import { SEED_USERS } from '../data/mockUsers';
-import { SEED_ORDERS } from '../data/mockOrders';
-import { SEED_CATEGORIES } from '../data/mockCategories';
-import { SEED_PROMOTIONS } from '../data/mockPromotions';
-import { SEED_BANNERS } from '../data/mockBanners';
-import { SEED_REVIEWS } from '../data/mockReviews';
-import { PRODUCT_STATUS, MAIN_ADMIN_ID } from '../constants/roles';
+import { PRODUCT_STATUS } from '../constants/roles';
+import { useAuth } from './AuthContext';
+import { productService } from '../services/productService';
+import { categoryService } from '../services/categoryService';
+import { orderService } from '../services/orderService';
+import { userService } from '../services/userService';
+import { promotionService } from '../services/promotionService';
+import { bannerService } from '../services/bannerService';
+import { reviewService } from '../services/reviewService';
 
 const DataContext = createContext(null);
 
@@ -20,20 +20,39 @@ const DEFAULT_SETTINGS = {
   freeShippingMin: 0,
 };
 
-function seedData() {
-  if (getItem(STORAGE_KEYS.SEEDED)) return;
-  setItem(STORAGE_KEYS.PRODUCTS, SEED_PRODUCTS);
-  setItem(STORAGE_KEYS.USERS, SEED_USERS);
-  setItem(STORAGE_KEYS.ORDERS, SEED_ORDERS);
-  setItem(STORAGE_KEYS.CATEGORIES, SEED_CATEGORIES);
-  setItem(STORAGE_KEYS.PROMOTIONS, SEED_PROMOTIONS);
-  setItem(STORAGE_KEYS.BANNERS, SEED_BANNERS);
-  setItem(STORAGE_KEYS.REVIEWS, SEED_REVIEWS);
-  setItem(STORAGE_KEYS.SETTINGS, DEFAULT_SETTINGS);
-  setItem(STORAGE_KEYS.SEEDED, true);
+function normUser(u) {
+  if (!u) return null;
+  return { ...u, id: u.id || u._id };
+}
+
+function normOrder(o) {
+  if (!o) return null;
+  // backend: {orderCode, customerInfo, totalPrice...} -> frontend mock shape
+  return {
+    ...o,
+    id: o.id || o.orderCode || o._id,
+    userId: o.userId || o.user?._id || o.user,
+    customerName: o.customerName || o.customerInfo?.name,
+    phone: o.phone || o.customerInfo?.phone,
+    email: o.email || o.customerInfo?.email,
+    address: o.address || o.customerInfo?.address,
+    subtotal: o.subtotal ?? 0,
+    discount: o.discount ?? o.discountAmount ?? 0,
+    shippingFee: o.shippingFee ?? 0,
+    total: o.total ?? o.totalPrice ?? 0,
+  };
+}
+
+function shallowEqual(a, b) {
+  try {
+    return JSON.stringify(a) === JSON.stringify(b);
+  } catch {
+    return false;
+  }
 }
 
 export function DataProvider({ children }) {
+  const { user, isAdmin, isAuthenticated } = useAuth();
   const [products, setProducts] = useState([]);
   const [users, setUsers] = useState([]);
   const [orders, setOrders] = useState([]);
@@ -42,27 +61,77 @@ export function DataProvider({ children }) {
   const [banners, setBanners] = useState([]);
   const [reviews, setReviews] = useState([]);
   const [settings, setSettings] = useState(DEFAULT_SETTINGS);
+  const [loading, setLoading] = useState(false);
 
-  const loadAll = useCallback(() => {
-    seedData();
-    setProducts(getItem(STORAGE_KEYS.PRODUCTS, []));
-    setUsers(getItem(STORAGE_KEYS.USERS, []));
-    setOrders(getItem(STORAGE_KEYS.ORDERS, []));
-    setCategories(getItem(STORAGE_KEYS.CATEGORIES, []));
-    setPromotions(getItem(STORAGE_KEYS.PROMOTIONS, []));
-    setBanners(getItem(STORAGE_KEYS.BANNERS, []));
-    setReviews(getItem(STORAGE_KEYS.REVIEWS, []));
-    setSettings(getItem(STORAGE_KEYS.SETTINGS, DEFAULT_SETTINGS));
+  const loadPublic = useCallback(async () => {
+    setLoading(true);
+    try {
+      const [p, c, promo, b] = await Promise.all([
+        productService.getAll(),
+        categoryService.getAll(),
+        promotionService.getAll(),
+        bannerService.getAll(),
+      ]);
+      setProducts(p || []);
+      setCategories(c || []);
+      setPromotions(promo || []);
+      setBanners(b || []);
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  const loadAdminData = useCallback(async () => {
+    if (!isAdmin) return;
+    try {
+      const [p, u, o, r, promo, b] = await Promise.all([
+        productService.getAll({ includeHidden: true }),
+        userService.getAll(),
+        orderService.getAll(),
+        reviewService.getAll(),
+        promotionService.getAll({ includeHidden: true }),
+        bannerService.getAll({ includeHidden: true }),
+      ]);
+      setProducts(p || []);
+      setUsers((u || []).map(normUser));
+      setOrders((o || []).map(normOrder));
+      setReviews(r || []);
+      setPromotions(promo || []);
+      setBanners(b || []);
+    } catch {
+      // ignore
+    }
+  }, [isAdmin]);
+
+  const loadMyOrders = useCallback(async () => {
+    if (!isAuthenticated) return;
+    try {
+      const o = await orderService.getMyOrders();
+      setOrders((o || []).map(normOrder));
+    } catch {
+      // ignore
+    }
+  }, [isAuthenticated]);
+
+  const loadAll = useCallback(async () => {
+    await loadPublic();
+    if (isAdmin) await loadAdminData();
+    else if (isAuthenticated) await loadMyOrders();
+  }, [loadAdminData, loadMyOrders, loadPublic, isAdmin, isAuthenticated]);
 
   useEffect(() => {
-    loadAll();
-  }, [loadAll]);
+    loadPublic();
+  }, [loadPublic]);
 
-  const persist = useCallback((key, data, setter) => {
-    setItem(key, data);
-    setter(data);
-  }, []);
+  useEffect(() => {
+    if (isAdmin) loadAdminData();
+    else if (isAuthenticated) loadMyOrders();
+    else {
+      setUsers([]);
+      setOrders([]);
+      setReviews([]);
+    }
+  }, [isAdmin, isAuthenticated, user?.id, loadAdminData, loadMyOrders]);
 
   const activeProducts = useMemo(
     () => products.filter((p) => p.status === PRODUCT_STATUS.ACTIVE),
@@ -78,48 +147,49 @@ export function DataProvider({ children }) {
   );
 
   const addProduct = useCallback(
-    (data) => {
-      const product = normalizeProduct({ ...data, id: data.id || `p${Date.now()}` }, products.length);
-      const next = [product, ...products];
-      persist(STORAGE_KEYS.PRODUCTS, next, setProducts);
+    async (data) => {
+      const product = await productService.create(data);
+      setProducts((prev) => [product, ...prev]);
       return product;
     },
-    [products, persist]
+    []
   );
 
   const updateProduct = useCallback(
-    (id, updates) => {
-      const next = products.map((p) =>
-        p.id === id ? normalizeProduct({ ...p, ...updates, id }, 0) : p
-      );
-      persist(STORAGE_KEYS.PRODUCTS, next, setProducts);
+    async (id, updates) => {
+      const updated = await productService.update(id, updates);
+      setProducts((prev) => prev.map((p) => (p.id === id ? updated : p)));
     },
-    [products, persist]
+    []
   );
 
   const deleteProduct = useCallback(
-    (id) => {
-      const next = products.filter((p) => p.id !== id);
-      persist(STORAGE_KEYS.PRODUCTS, next, setProducts);
+    async (id) => {
+      await productService.remove(id);
+      setProducts((prev) => prev.filter((p) => p.id !== id));
     },
-    [products, persist]
+    []
   );
 
   const addOrder = useCallback(
-    (order) => {
-      const next = [order, ...orders];
-      persist(STORAGE_KEYS.ORDERS, next, setOrders);
-      return order;
+    async (orderPayload) => {
+      const created = await orderService.create(orderPayload);
+      const normalized = normOrder(created);
+      setOrders((prev) => [normalized, ...prev]);
+      return normalized;
     },
-    [orders, persist]
+    []
   );
 
   const updateOrder = useCallback(
-    (id, updates) => {
-      const next = orders.map((o) => (o.id === id ? { ...o, ...updates } : o));
-      persist(STORAGE_KEYS.ORDERS, next, setOrders);
+    async (id, updates) => {
+      if (updates?.status) {
+        const updated = await orderService.updateStatus(id, updates.status);
+        const normalized = normOrder(updated);
+        setOrders((prev) => prev.map((o) => (o.id === id ? normalized : o)));
+      }
     },
-    [orders, persist]
+    []
   );
 
   const getOrderById = useCallback((id) => orders.find((o) => o.id === id), [orders]);
@@ -130,76 +200,128 @@ export function DataProvider({ children }) {
   );
 
   const updateUser = useCallback(
-    (id, updates) => {
-      if (id === MAIN_ADMIN_ID && updates.role && updates.role !== 'admin') return false;
-      const next = users.map((u) => (u.id === id ? { ...u, ...updates } : u));
-      persist(STORAGE_KEYS.USERS, next, setUsers);
+    async (id, updates) => {
+      if (updates.role) {
+        const u = await userService.updateRole(id, updates.role);
+        setUsers((prev) => prev.map((x) => (x.id === id ? normUser(u) : x)));
+        return true;
+      }
+
+      const u = await userService.updateStatus(id, updates);
+      setUsers((prev) => prev.map((x) => (x.id === id ? normUser(u) : x)));
       return true;
     },
-    [users, persist]
+    []
   );
 
   const deleteUser = useCallback(
-    (id) => {
-      if (id === MAIN_ADMIN_ID) return false;
-      const next = users.filter((u) => u.id !== id);
-      persist(STORAGE_KEYS.USERS, next, setUsers);
+    async (id) => {
+      await userService.remove(id);
+      setUsers((prev) => prev.filter((u) => u.id !== id));
       return true;
     },
-    [users, persist]
-  );
-
-  const registerUser = useCallback(
-    (data) => {
-      if (users.some((u) => u.email === data.email)) return null;
-      const user = {
-        id: `user-${Date.now()}`,
-        role: 'user',
-        locked: false,
-        createdAt: new Date().toISOString(),
-        ...data,
-      };
-      const next = [...users, user];
-      persist(STORAGE_KEYS.USERS, next, setUsers);
-      return user;
-    },
-    [users, persist]
-  );
-
-  const findUserByCredentials = useCallback(
-    (email, password) => users.find((u) => u.email === email && u.password === password),
-    [users]
+    []
   );
 
   const saveCategories = useCallback(
-    (data) => persist(STORAGE_KEYS.CATEGORIES, data, setCategories),
-    [persist]
+    async (next) => {
+      const prev = categories;
+
+      const prevMap = new Map(prev.map((c) => [c.id, c]));
+      const nextMap = new Map(next.map((c) => [c.id, c]));
+
+      const toDelete = prev.filter((c) => !nextMap.has(c.id));
+      const toCreate = next.filter((c) => !prevMap.has(c.id));
+      const toUpdate = next.filter((c) => prevMap.has(c.id) && !shallowEqual(prevMap.get(c.id), c));
+
+      await Promise.all([
+        ...toDelete.map((c) => categoryService.remove(c.id)),
+        ...toCreate.map((c) => categoryService.create(c)),
+        ...toUpdate.map((c) => categoryService.update(c.id, c)),
+      ]);
+
+      const fresh = await categoryService.getAll();
+      setCategories(fresh || []);
+    },
+    [categories]
   );
 
   const savePromotions = useCallback(
-    (data) => persist(STORAGE_KEYS.PROMOTIONS, data, setPromotions),
-    [persist]
+    async (next) => {
+      const prev = promotions;
+      const prevMap = new Map(prev.map((p) => [p.id, p]));
+      const nextMap = new Map(next.map((p) => [p.id, p]));
+      const toDelete = prev.filter((p) => !nextMap.has(p.id));
+      const toCreate = next.filter((p) => !prevMap.has(p.id));
+      const toUpdate = next.filter((p) => prevMap.has(p.id) && !shallowEqual(prevMap.get(p.id), p));
+
+      await Promise.all([
+        ...toDelete.map((p) => promotionService.remove(p.id)),
+        ...toCreate.map((p) => promotionService.create(p)),
+        ...toUpdate.map((p) => promotionService.update(p.id, p)),
+      ]);
+
+      const fresh = await promotionService.getAll({ includeHidden: true });
+      setPromotions(fresh || []);
+    },
+    [promotions]
   );
 
   const saveBanners = useCallback(
-    (data) => persist(STORAGE_KEYS.BANNERS, data, setBanners),
-    [persist]
+    async (next) => {
+      const prev = banners;
+      const prevMap = new Map(prev.map((b) => [b.id, b]));
+      const nextMap = new Map(next.map((b) => [b.id, b]));
+      const toDelete = prev.filter((b) => !nextMap.has(b.id));
+      const toCreate = next.filter((b) => !prevMap.has(b.id));
+      const toUpdate = next.filter((b) => prevMap.has(b.id) && !shallowEqual(prevMap.get(b.id), b));
+
+      await Promise.all([
+        ...toDelete.map((b) => bannerService.remove(b.id)),
+        ...toCreate.map((b) => bannerService.create(b)),
+        ...toUpdate.map((b) => bannerService.update(b.id, b)),
+      ]);
+
+      const fresh = await bannerService.getAll({ includeHidden: true });
+      setBanners(fresh || []);
+    },
+    [banners]
   );
 
   const saveReviews = useCallback(
-    (data) => persist(STORAGE_KEYS.REVIEWS, data, setReviews),
-    [persist]
+    async () => {
+      const r = await reviewService.getAll();
+      setReviews(r || []);
+    },
+    []
   );
 
+  const updateReviewStatus = useCallback(async (id, status) => {
+    const updated = await reviewService.updateStatus(id, status);
+    setReviews((prev) => prev.map((r) => (r.id === id ? updated : r)));
+    return updated;
+  }, []);
+
+  const deleteReview = useCallback(async (id) => {
+    await reviewService.remove(id);
+    setReviews((prev) => prev.filter((r) => r.id !== id));
+  }, []);
+
   const saveSettings = useCallback(
-    (data) => persist(STORAGE_KEYS.SETTINGS, data, setSettings),
-    [persist]
+    (data) => setSettings(data),
+    []
   );
 
   const getPromotionByCode = useCallback(
-    (code) => {
+    async (code, orderValue = 0) => {
       const upper = code?.trim().toUpperCase();
-      return promotions.find((p) => p.code === upper && p.active);
+      if (!upper) return null;
+      try {
+        const res = await promotionService.check(upper, orderValue);
+        return res?.promotion || null;
+      } catch {
+        return null;
+      }
     },
     [promotions]
   );
@@ -216,6 +338,7 @@ export function DataProvider({ children }) {
       reviews,
       settings,
       loadAll,
+      loading,
       getProductById,
       addProduct,
       updateProduct,
@@ -226,12 +349,12 @@ export function DataProvider({ children }) {
       getOrdersByUserId,
       updateUser,
       deleteUser,
-      registerUser,
-      findUserByCredentials,
       saveCategories,
       savePromotions,
       saveBanners,
       saveReviews,
+      updateReviewStatus,
+      deleteReview,
       saveSettings,
       getPromotionByCode,
     }),
@@ -246,6 +369,7 @@ export function DataProvider({ children }) {
       reviews,
       settings,
       loadAll,
+      loading,
       getProductById,
       addProduct,
       updateProduct,
@@ -256,12 +380,12 @@ export function DataProvider({ children }) {
       getOrdersByUserId,
       updateUser,
       deleteUser,
-      registerUser,
-      findUserByCredentials,
       saveCategories,
       savePromotions,
       saveBanners,
       saveReviews,
+      updateReviewStatus,
+      deleteReview,
       saveSettings,
       getPromotionByCode,
     ]

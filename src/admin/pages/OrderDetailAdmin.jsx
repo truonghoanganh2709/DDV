@@ -20,8 +20,8 @@ export default function OrderDetailAdmin() {
     );
   }
 
-  const changeStatus = (status) => {
-    updateOrder(id, { status });
+  const changeStatus = async (status) => {
+    await updateOrder(id, { status });
     showToast('Cap nhat trang thai thanh cong', 'success');
   };
 

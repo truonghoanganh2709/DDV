@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useData } from '../../context/DataContext';
 import { useToast } from '../../context/ToastContext';
 import '../../styles/admin.css';
@@ -8,10 +8,14 @@ export default function BannerAdmin() {
   const { showToast } = useToast();
   const [list, setList] = useState(banners);
 
-  const toggle = (id) => {
+  useEffect(() => {
+    setList(banners);
+  }, [banners]);
+
+  const toggle = async (id) => {
     const next = list.map((b) => (b.id === id ? { ...b, active: !b.active } : b));
     setList(next);
-    saveBanners(next);
+    await saveBanners(next);
     showToast('Cap nhat banner', 'success');
   };
 

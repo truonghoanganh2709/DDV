@@ -1,16 +1,8 @@
 export const STORAGE_KEYS = {
-  AUTH: 'ddv_auth',
-  USERS: 'ddv_users',
-  PRODUCTS: 'ddv_products',
-  CATEGORIES: 'ddv_categories',
-  ORDERS: 'ddv_orders',
-  PROMOTIONS: 'ddv_promotions',
-  BANNERS: 'ddv_banners',
-  REVIEWS: 'ddv_reviews',
-  SETTINGS: 'ddv_settings',
+  TOKEN: 'ddv_token',
+  USER: 'ddv_user',
   CART: 'ddv_cart',
   WISHLIST: 'ddv_wishlist',
-  SEEDED: 'ddv_seeded_v3',
 };
 
 export function getItem(key, fallback = null) {

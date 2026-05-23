@@ -66,25 +66,29 @@ export function CartProvider({ children }) {
     [items]
   );
 
-  const applyDiscount = (code) => {
-    const promo = getPromotionByCode(code);
+  const applyDiscount = async (code) => {
+    const promo = await getPromotionByCode(code, subtotal);
     if (!promo) return { ok: false, message: 'Ma khuyen mai khong hop le hoac da het han' };
-    if (subtotal < (promo.minOrder || 0)) {
-      return { ok: false, message: `Don hang toi thieu ${promo.minOrder?.toLocaleString('vi-VN')}d` };
+    const minOrder = promo.minOrder ?? promo.minOrderValue ?? 0;
+    if (subtotal < minOrder) {
+      return { ok: false, message: `Don hang toi thieu ${Number(minOrder).toLocaleString('vi-VN')}d` };
     }
     setDiscountCode(promo.code);
     setAppliedDiscount(promo);
-    return { ok: true, message: `Ap dung: ${promo.name}` };
+    return { ok: true, message: `Ap dung: ${promo.name || promo.code}` };
   };
 
   const discountAmount = useMemo(() => {
     if (!appliedDiscount) return 0;
     let amount = 0;
-    if (appliedDiscount.type === 'percent') {
-      amount = Math.round(subtotal * (appliedDiscount.value / 100));
-      if (appliedDiscount.maxDiscount) amount = Math.min(amount, appliedDiscount.maxDiscount);
+    const type = appliedDiscount.type || appliedDiscount.discountType;
+    const value = appliedDiscount.value ?? appliedDiscount.discountValue ?? 0;
+    const maxDiscount = appliedDiscount.maxDiscount || 0;
+    if (type === 'percent') {
+      amount = Math.round(subtotal * (value / 100));
+      if (maxDiscount) amount = Math.min(amount, maxDiscount);
     } else {
-      amount = appliedDiscount.value;
+      amount = value;
     }
     return Math.min(amount, subtotal);
   }, [appliedDiscount, subtotal]);

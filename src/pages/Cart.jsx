@@ -12,10 +12,10 @@ export default function Cart() {
   const navigate = useNavigate();
   const { showToast } = useToast();
 
-  const handleApplyCode = (e) => {
+  const handleApplyCode = async (e) => {
     e.preventDefault();
     const code = e.target.code.value;
-    const result = applyDiscount(code);
+    const result = await applyDiscount(code);
     showToast(result.message, result.ok ? 'success' : 'error');
   };
 

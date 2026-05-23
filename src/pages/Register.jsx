@@ -14,9 +14,9 @@ export default function Register() {
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const result = register(form);
+    const result = await register(form);
     if (result.ok) {
       showToast('Dang ky thanh cong', 'success');
       navigate('/');

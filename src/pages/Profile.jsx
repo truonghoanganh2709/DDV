@@ -7,11 +7,12 @@ import styles from './Profile.module.css';
 export default function Profile() {
   const { user, logout, updateProfile } = useAuth();
 
-  const handleSave = (e) => {
+  const handleSave = async (e) => {
     e.preventDefault();
     const fd = new FormData(e.target);
-    updateProfile({ name: fd.get('name'), phone: fd.get('phone'), email: fd.get('email') });
-    alert('Da cap nhat ho so');
+    const result = await updateProfile({ name: fd.get('name'), phone: fd.get('phone') });
+    if (result.ok) alert('Da cap nhat ho so');
+    else alert(result.message || 'Cap nhat that bai');
   };
 
   return (

@@ -3,14 +3,13 @@ import { useToast } from '../../context/ToastContext';
 import '../../styles/admin.css';
 
 export default function ReviewAdmin() {
-  const { reviews, saveReviews } = useData();
+  const { reviews, updateReviewStatus } = useData();
   const { showToast } = useToast();
 
-  const toggle = (id) => {
-    const next = reviews.map((r) =>
-      r.id === id ? { ...r, status: r.status === 'visible' ? 'hidden' : 'visible' } : r
-    );
-    saveReviews(next);
+  const toggle = async (id) => {
+    const current = reviews.find((r) => r.id === id);
+    const nextStatus = current?.status === 'visible' ? 'hidden' : 'visible';
+    await updateReviewStatus(id, nextStatus);
     showToast('Cap nhat danh gia', 'success');
   };
 

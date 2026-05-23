@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useData } from '../../context/DataContext';
 import { useToast } from '../../context/ToastContext';
 import '../../styles/admin.css';
@@ -8,13 +8,17 @@ export default function PromotionAdmin() {
   const { showToast } = useToast();
   const [list, setList] = useState(promotions);
 
+  useEffect(() => {
+    setList(promotions);
+  }, [promotions]);
+
   const sync = (next) => {
     setList(next);
-    savePromotions(next);
+    return savePromotions(next);
   };
 
-  const toggle = (id) => {
-    sync(list.map((p) => (p.id === id ? { ...p, active: !p.active } : p)));
+  const toggle = async (id) => {
+    await sync(list.map((p) => (p.id === id ? { ...p, active: !p.active } : p)));
     showToast('Cap nhat thanh cong', 'success');
   };
 

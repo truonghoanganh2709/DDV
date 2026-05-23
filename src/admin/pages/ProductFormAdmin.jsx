@@ -52,7 +52,7 @@ export default function ProductFormAdmin() {
     setForm((f) => ({ ...f, [name]: type === 'checkbox' ? checked : value }));
   };
 
-  const submit = (e) => {
+  const submit = async (e) => {
     e.preventDefault();
     if (!form.name || !form.price) {
       showToast('Vui long nhap ten va gia', 'error');
@@ -74,10 +74,10 @@ export default function ProductFormAdmin() {
     };
 
     if (isEdit) {
-      updateProduct(id, payload);
+      await updateProduct(id, payload);
       showToast('Cap nhat san pham thanh cong', 'success');
     } else {
-      addProduct(payload);
+      await addProduct(payload);
       showToast('Them san pham thanh cong', 'success');
     }
     navigate('/admin/products');

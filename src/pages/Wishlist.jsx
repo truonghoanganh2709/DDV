@@ -3,12 +3,13 @@ import { Heart } from 'lucide-react';
 import Breadcrumb from '../components/common/Breadcrumb';
 import ProductCard from '../components/common/ProductCard';
 import { useWishlist } from '../context/WishlistContext';
-import { PRODUCTS } from '../data/products';
+import { useData } from '../context/DataContext';
 import styles from './Wishlist.module.css';
 
 export default function Wishlist() {
   const { ids } = useWishlist();
-  const products = PRODUCTS.filter((p) => ids.includes(p.id));
+  const { products: allProducts } = useData();
+  const products = allProducts.filter((p) => ids.includes(p.id));
 
   return (
     <>

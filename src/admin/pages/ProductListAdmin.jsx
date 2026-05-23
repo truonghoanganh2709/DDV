@@ -29,9 +29,9 @@ export default function ProductListAdmin() {
     });
   }, [products, search, cat, brand, status]);
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (deleteId) {
-      deleteProduct(deleteId);
+      await deleteProduct(deleteId);
       showToast('Da xoa san pham', 'success');
       setDeleteId(null);
     }
